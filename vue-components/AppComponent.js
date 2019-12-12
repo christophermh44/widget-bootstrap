@@ -1,17 +1,17 @@
 Vue.component('app', {
-	props: ['configuration', 'globals'],
-	template: `
+  props: ['configuration', 'globals'],
+  template: `
 <div class="widget">
-	Hello World!
+  Hello World!
 </div>
 `,
-	data() {return{
+  data() {return{
 
-	}},
-	methods: {
+  }},
+  methods: {
 
-	},
-	mounted() {
+  },
+  mounted() {
 
-	}
+  }
 });
