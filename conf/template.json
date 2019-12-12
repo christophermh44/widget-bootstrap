@@ -1,0 +1,27 @@
+{
+	"templates": [
+		{
+			"name": "vue",
+			"settings": {
+				"wrapper": "#app-wrapper",
+				"components": [
+					"App"
+				]
+			}
+		}
+	],
+	"resources": ".",
+	"pre": {
+		"css": [
+			{"href": "css/widget.css", "media": "screen"}
+		],
+		"js": [
+			"js/helpers.js"
+		]
+	},
+	"post": {
+		"js": [
+			"js/widget.js"
+		]
+	}
+}
