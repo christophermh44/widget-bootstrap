@@ -1,8 +1,8 @@
 Vue.component('app', {
-	props: ['configuration'],
+	props: ['configuration', 'globals'],
 	template: `
 <div class="widget">
-	Hello world
+	Hello World!
 </div>
 `,
 	data() {return{

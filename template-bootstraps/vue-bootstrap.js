@@ -1,4 +1,4 @@
-(function(promise, template, configuration, loadStylesheet, loadScript) {
+(function({finalResolve, finalReject, template, configuration, loadStylesheet, loadScript, element, sequentialPromises, globals}) {
 
 	/**
 	 * Chargement des ressources de Vue
@@ -6,11 +6,11 @@
 	 */
 	function loadResources() {
 		return new Promise((resolve, reject) => {
-			Promise.all([
-				...['vue.min.js']
+			sequentialPromises(
+				['vue.min.js']
 				.map(script => configuration.resources + '/template-bootstraps/' + template.name + '-resources/' + script)
 				.map(loadScript)
-			])
+			)
 			.then(resolve)
 			.catch(reject);
 		});
@@ -27,6 +27,7 @@
         return new Promise((resolve) => {
             let appElement = document.createElement('app');
             appElement.setAttribute(':configuration', 'configuration');
+            appElement.setAttribute(':globals', 'globals');
             const wrapper = document.querySelector(template.settings.wrapper);
             wrapper.appendChild(appElement);
             resolve(configuration);
@@ -39,21 +40,22 @@
 	 */
 	function loadComponents() {
 		return new Promise((resolve) => {
-			Promise.all([
-				...(template.settings.components)
+			sequentialPromises(
+				template.settings.components
 				.map(comp => loadScript(configuration.resources + '/vue-components/' + comp + 'Component.js'))
-			])
+			)
 			.then(() => {
 				resolve(new Vue({
 					el: template.settings.wrapper,
 					data: {
-						configuration: configuration
+						configuration: configuration,
+						globals: globals
 					}
 				}));
 			});
 		})
 	}
 
-	loadResources().then(initTemplate).then(loadComponents).then(promise.resolve);
+	loadResources().then(initTemplate).then(loadComponents).then(finalResolve);
 
-})(promise, template, configuration, loadStylesheet, loadScript);
+})(api);

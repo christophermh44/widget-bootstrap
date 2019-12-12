@@ -1,6 +1,9 @@
 {
 	"templates": [
 		{
+			"name": "attributes-reader"
+		},
+		{
 			"name": "vue",
 			"settings": {
 				"wrapper": "#app-wrapper",

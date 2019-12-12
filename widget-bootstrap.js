@@ -1,4 +1,38 @@
 (function(self) {
+	let globals = {};
+
+	/**
+	 * Helper : appel séquentiel de promesses
+	 */ 
+	function sequentialPromises(promises) {
+	  return new Promise((resolve, reject) => {
+	    const values = [];
+	    let i = 0;
+
+	    const save = value => values.push(value);
+	    const iterate = () => i++;
+
+	    const loop = () => {
+	      if (i < promises.length) {
+	        const entry = promises[i];
+	        const promise = typeof entry === "function" ? entry() : entry;
+
+	        return promise
+	          .then(save)
+	          .then(iterate)
+	          .then(() => setTimeout(loop, 0))
+	          .catch(e => {
+	            reject(e);
+	            return Promise.reject(e);
+	          });
+	      } else {
+	        return resolve(values);
+	      }
+	    };
+	    loop();
+	  });
+	}
+
 	/**
 	 * Chargement de la configuration
 	 * @returns {Promise<any>} Promesse de chargement de la configuration
@@ -74,7 +108,7 @@
 	function loadDeclaredStylesheets(configuration, step) {
         return new Promise((resolve, reject) => {
         	if (configuration[step] && configuration[step].css) {
-	            Promise.all(configuration[step].css.map(sheet => {
+	            sequentialPromises(configuration[step].css.map(sheet => {
 	                if (typeof sheet === typeof '') {
 	                    return loadStylesheet(sheet);
 	                } else if (typeof sheet === typeof {}) {
@@ -100,7 +134,7 @@
 	function loadDeclaredScripts(configuration, step) {
 		return new Promise((resolve, reject) => {
 			if (configuration[step] && configuration[step].js) {
-				Promise.all(configuration[step].js.map(script => {
+				sequentialPromises(configuration[step].js.map(script => {
 					if (/^(https?\:\/\/|\/\/)/.test(script)) {
 						return loadScript(script);
 					} else {
@@ -164,15 +198,22 @@
 			fetch(configuration.resources + '/template-bootstraps/' + template.name + '-bootstrap.js')
 			.then(r => r.text())
 			.then(body => {
-				const templateFunc = new Function('promise', 'template', 'configuration', 'loadStylesheet', 'loadScript', 'return ' + body);
+				const templateFunc = new Function('api', 'return ' + body);
 				templateFunc({
-					resolve: () => {
+					finalResolve: () => {
 						resolve(configuration);
 					},
-					reject: (e) => {
+					finalReject: (e) => {
 						reject(e);
-					}
-				}, template, configuration, loadStylesheet, loadScript);
+					},
+					template,
+					configuration,
+					loadStylesheet,
+					loadScript,
+					sequentialPromises,
+					self,
+					globals
+				});
 			})
 			.catch(e => {
 				console.error(e);
@@ -188,22 +229,27 @@
 	 */
 	function loadTemplates(configuration) {
 		return new Promise((resolve, reject) => {
-			Promise.all([
-				...(configuration.templates)
+			sequentialPromises(
+				configuration.templates
 				.map(template => loadBootstrap(template, configuration))
-			])
-			.then(() => {
+			).then(() => {
 				resolve(configuration);
-			})
-			.catch(reject);
+			});
 		});
+	}
+
+	/**
+	 * Finalisation
+	 */
+	function finish() {
+		console.info('Widget loaded!');
 	}
 
 	/**
 	 * Lancement de l'application
 	 */
 	window.addEventListener('load', () => {
-		loadConfiguration().then(loadPre).then(loadTemplates).then(loadPost);
+		loadConfiguration().then(loadPre).then(loadTemplates).then(loadPost).then(finish);
 	});
 
 })(document.currentScript);
