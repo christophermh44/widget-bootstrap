@@ -110,9 +110,11 @@
       if (configuration[step] && configuration[step].css) {
         sequentialPromises(configuration[step].css.map(sheet => {
           if (typeof sheet === typeof '') {
-            return loadStylesheet(sheet);
+            let path = /^(https?:\/\/|\/\/)/.test(sheet) ? sheet : configuration.resources + '/' + sheet;
+            return loadStylesheet(path);
           } else if (typeof sheet === typeof {}) {
-            return loadStylesheet(sheet.href, sheet.media);
+            let path = /^(https?:\/\/|\/\/)/.test(sheet.href) ? sheet.href : configuration.resources + '/' + sheet.href;
+            return loadStylesheet(path, sheet.media);
           } else {
             return null;
           }
@@ -135,11 +137,8 @@
     return new Promise((resolve, reject) => {
       if (configuration[step] && configuration[step].js) {
         sequentialPromises(configuration[step].js.map(script => {
-          if (/^(https?:\/\/|\/\/)/.test(script)) {
-            return loadScript(script);
-          } else {
-            return loadScript(configuration.resources + '/' + script);
-          }
+          let path = /^(https?:\/\/|\/\/)/.test(script) ? script : configuration.resources + '/' + script;
+          return loadScript(path);
         }))
         .then(resolve)
         .catch(reject);
